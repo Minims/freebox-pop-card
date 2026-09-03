@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Freebox Pop Card</title>
+  <desc id="desc">A white circular router with a red network indicator</desc>
+  <defs>
+    <linearGradient id="shell" x1="22" y1="14" x2="103" y2="114" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#d9d9dd"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="165%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="#e10600"/>
+  <circle cx="64" cy="62" r="42" fill="url(#shell)" filter="url(#shadow)"/>
+  <circle cx="64" cy="62" r="35" fill="none" stroke="#202124" stroke-opacity=".1"/>
+  <text x="64" y="68" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="700" letter-spacing="-1.5" fill="#202124">free</text>
+  <circle cx="88" cy="84" r="4" fill="#2eae65"/>
+</svg>

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Freebox Pop Card preview</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --primary-text-color: #202124;
+        --secondary-text-color: #6a6d72;
+        --disabled-text-color: #a1a4a9;
+        --primary-color: #e10600;
+        --error-color: #d93025;
+        --divider-color: #dcdde1;
+        --card-background-color: #fff;
+        --ha-card-background: #fff;
+      }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        place-items: start center;
+        margin: 0;
+        background: #eef0f3;
+        font-family: Arial, sans-serif;
+      }
+
+      freebox-pop-card {
+        width: min(720px, calc(100vw - 32px));
+        margin: 32px 0;
+      }
+
+      ha-card {
+        display: block;
+        border-radius: 20px;
+        background: var(--card-background-color);
+        box-shadow: 0 8px 28px rgb(0 0 0 / 15%);
+      }
+
+      ha-icon {
+        display: inline-grid;
+        place-items: center;
+      }
+
+      ha-icon::after {
+        content: "•";
+      }
+    </style>
+  </head>
+  <body>
+    <freebox-pop-card></freebox-pop-card>
+    <script type="module" src="../dist/freebox-pop-card.js"></script>
+    <script type="module">
+      await customElements.whenDefined("freebox-pop-card");
+      const entities = {
+        "sensor.freebox_download": {
+          entity_id: "sensor.freebox_download",
+          unique_id: "AA rate_down",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "sensor.freebox_upload": {
+          entity_id: "sensor.freebox_upload",
+          unique_id: "AA rate_up",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "sensor.freebox_cpu": {
+          entity_id: "sensor.freebox_cpu",
+          unique_id: "AA temp_cpu",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "sensor.freebox_fan": {
+          entity_id: "sensor.freebox_fan",
+          unique_id: "AA fan0",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "switch.freebox_wifi": {
+          entity_id: "switch.freebox_wifi",
+          unique_id: "AA wifi",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "button.freebox_reboot": {
+          entity_id: "button.freebox_reboot",
+          unique_id: "AA reboot",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "device_tracker.freebox": {
+          entity_id: "device_tracker.freebox",
+          unique_id: "AA",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "device_tracker.phone": {
+          entity_id: "device_tracker.phone",
+          unique_id: "BB",
+          platform: "freebox",
+          device_id: "phone",
+          config_entry_id: "entry",
+        },
+      };
+      const states = {
+        "sensor.freebox_download": {
+          state: "84.6",
+          attributes: {
+            friendly_name: "Débit descendant",
+            unit_of_measurement: "MB/s",
+          },
+        },
+        "sensor.freebox_upload": {
+          state: "7.3",
+          attributes: { friendly_name: "Débit montant", unit_of_measurement: "MB/s" },
+        },
+        "sensor.freebox_cpu": {
+          state: "48.5",
+          attributes: {
+            friendly_name: "Température CPU",
+            device_class: "temperature",
+            unit_of_measurement: "°C",
+          },
+        },
+        "sensor.freebox_fan": {
+          state: "1420",
+          attributes: { friendly_name: "Ventilateur", unit_of_measurement: "rpm" },
+        },
+        "switch.freebox_wifi": { state: "on", attributes: {} },
+        "button.freebox_reboot": { state: "unknown", attributes: {} },
+        "device_tracker.freebox": {
+          state: "home",
+          attributes: {
+            connection_type: "FTTH",
+            IPv4: "192.0.2.10",
+            IPv6: "2001:db8::10",
+            uptime: new Date(Date.now() - 246600000).toISOString(),
+          },
+        },
+        "device_tracker.phone": {
+          state: "home",
+          attributes: { friendly_name: "Téléphone" },
+        },
+      };
+      const card = document.querySelector("freebox-pop-card");
+      card.setConfig({ type: "custom:freebox-pop-card" });
+      card.hass = {
+        language: "fr",
+        entities,
+        states,
+        devices: {
+          router: {
+            id: "router",
+            name: "Freebox Pop",
+            model: "Freebox v8 (Pop)",
+            sw_version: "4.9.8",
+            configuration_url: "https://mafreebox.freebox.fr/",
+          },
+          phone: { id: "phone", name: "Téléphone" },
+        },
+        callService: (...args) => console.info("service", ...args),
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "name": "freebox-pop-card",
+  "version": "2026.9.0",
+  "description": "A modern Home Assistant dashboard card for the Freebox Pop Server",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check": "npm run format:check && npm run lint && npm test && npm run build"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "freebox",
+    "freebox-pop",
+    "hacs"
+  ],
+  "author": "Minims",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Minims/freebox-pop-card.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Minims/freebox-pop-card/issues"
+  },
+  "homepage": "https://github.com/Minims/freebox-pop-card#readme",
+  "funding": [
+    "https://ko-fi.com/minims",
+    "https://www.buymeacoffee.com/minims"
+  ],
+  "dependencies": {
+    "lit": "^3.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.9.1",
+    "globals": "^17.12.0",
+    "happy-dom": "^20.13.2",
+    "prettier": "^3.6.2",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

@@ -1,0 +1,122 @@
+<p align="center">
+  <img src="docs/images/freebox-pop-card-icon.svg" alt="Freebox Pop Card icon" width="128">
+</p>
+
+# Freebox Pop Card
+
+A modern Home Assistant dashboard card for the **Freebox Pop Server**. It uses the entities created by
+Home Assistant's official [`freebox`](https://www.home-assistant.io/integrations/freebox/) integration
+and does not connect to the router directly from the browser.
+
+[![Validate](https://github.com/Minims/freebox-pop-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Minims/freebox-pop-card/actions/workflows/validate.yml)
+[![Release](https://img.shields.io/github/v/release/Minims/freebox-pop-card)](https://github.com/Minims/freebox-pop-card/releases/latest)
+[![License](https://img.shields.io/github/license/Minims/freebox-pop-card)](LICENSE)
+[![Buy me a coffee](https://img.shields.io/badge/Buy_me_a_coffee-minims-FFDD00?logo=buymeacoffee&logoColor=000)](https://www.buymeacoffee.com/minims)
+
+## Features
+
+- Automatic Freebox Server and entity discovery by Home Assistant `device_id`; renamed entity IDs work.
+- Live upload and download rates using Home Assistant's localized unit formatting.
+- WAN details: IPv4, IPv6, access type, uptime, firmware, hardware revision, and serial number when exposed.
+- Temperatures, fan speeds, attached storage, RAID health, missed calls, and connected-client summary.
+- Wi-Fi control, Freebox OS shortcut, mark-calls-read action, and protected Server reboot.
+- Compact, overview, and detailed layouts for Sections dashboards and mobile screens.
+- English and French interface, Home Assistant theme support, and a visual card editor.
+- Capability-driven rendering: unavailable sections are omitted instead of showing broken controls.
+
+The card only uses Home Assistant state, entity-registry, and device-registry data. Authentication and
+Freebox API traffic remain entirely inside the official integration.
+
+## Requirements
+
+- A Freebox Pop Server configured with Home Assistant's official
+  [Freebox integration](https://www.home-assistant.io/integrations/freebox/).
+- A current Home Assistant release and HACS with Dashboard repositories enabled.
+- The **Modification des réglages de la Freebox** permission granted to Home Assistant in Freebox OS
+  if Wi-Fi control or reboot is required.
+
+The card is designed for the Pop V8 but remains capability-compatible with other Freebox OS routers
+supported by the official integration.
+
+## Installation
+
+### HACS
+
+1. Add `https://github.com/Minims/freebox-pop-card` as a custom **Dashboard** repository in HACS.
+2. Install **Freebox Pop Card**.
+3. Reload the browser when HACS requests it, then add the card from the dashboard editor.
+
+HACS normally registers the JavaScript resource automatically. If needed, add
+`/hacsfiles/freebox-pop-card/freebox-pop-card.js` as a JavaScript module under
+**Settings → Dashboards → Resources**.
+
+### Manual
+
+Download `freebox-pop-card.js` from the latest GitHub release into `config/www/`, then register
+`/local/freebox-pop-card.js` as a JavaScript module.
+
+## Configuration
+
+The visual editor discovers compatible Freebox Server devices. If exactly one is configured, the card
+selects it automatically.
+
+```yaml
+type: custom:freebox-pop-card
+device_id: 0123456789abcdef0123456789abcdef
+title: Freebox Pop
+view: overview # compact, overview, or detailed
+show_connection: true
+show_system: true
+show_storage: true
+show_clients: true
+show_controls: true
+confirm_actions: true
+max_clients: 6
+```
+
+| Option            | Default     | Description                                                     |
+| ----------------- | ----------- | --------------------------------------------------------------- |
+| `device_id`       | automatic   | Home Assistant device-registry ID; required with several boxes. |
+| `title`           | device name | Optional card title.                                            |
+| `view`            | `overview`  | `compact`, `overview`, or single-column `detailed`.             |
+| `show_connection` | `true`      | Shows WAN addresses, access type, and uptime.                   |
+| `show_system`     | `true`      | Shows temperatures, fans, and missed calls.                     |
+| `show_storage`    | `true`      | Shows attached partitions and RAID health.                      |
+| `show_clients`    | `true`      | Shows devices currently connected to this Freebox.              |
+| `show_controls`   | `true`      | Shows Wi-Fi, Freebox OS, call, and reboot actions.              |
+| `confirm_actions` | `true`      | Confirms Wi-Fi shutdown and Server reboot.                      |
+| `max_clients`     | `6`         | Number of connected clients displayed, from 0 to 20.            |
+
+## Current Freebox integration limits
+
+The official integration does not currently expose individual Ethernet-port link state, negotiated
+speed, duplex, or per-port traffic. The card therefore does not invent or scrape those values. If Home
+Assistant adds entities for them in the future, they can be incorporated without moving Freebox
+authentication into the frontend.
+
+Connected-client detection depends on the `device_tracker` entities created by the official Freebox
+integration. Disabled entities are not displayed.
+
+## Development
+
+Node.js 20.19 or newer is required.
+
+```bash
+npm ci
+npm test
+npm run lint
+npm run build
+npm run check
+```
+
+Source files live under `src/`. The HACS bundle is generated at
+`dist/freebox-pop-card.js`; do not edit it manually.
+
+## Privacy and safety
+
+Do not include public IP addresses, serial numbers, MAC addresses, or unredacted Home Assistant
+diagnostics in issues or screenshots. Wi-Fi shutdown and reboot can interrupt access to Home Assistant;
+confirmations are enabled by default.
+
+Freebox and Free are trademarks of their respective owner. This independent project is not affiliated
+with or endorsed by Free.
