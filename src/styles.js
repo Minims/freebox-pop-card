@@ -7,6 +7,7 @@ export const cardStyles = css`
     --freebox-red-soft: color-mix(in srgb, var(--freebox-red) 14%, transparent);
     --freebox-green: #2eae65;
     --freebox-amber: #f3a712;
+    --freebox-icon-gap: 10px;
     --freebox-panel: color-mix(
       in srgb,
       var(--ha-card-background, var(--card-background-color)) 92%,
@@ -129,7 +130,8 @@ export const cardStyles = css`
   .action-button,
   .control,
   .metric-button,
-  .client {
+  .client,
+  .equipment-item {
     border: 1px solid var(--freebox-border);
     background: var(--freebox-panel);
     cursor: pointer;
@@ -143,7 +145,8 @@ export const cardStyles = css`
   .action-button:hover:not(:disabled),
   .control:hover:not(:disabled),
   .metric-button:hover:not(:disabled),
-  .client:hover:not(:disabled) {
+  .client:hover:not(:disabled),
+  .equipment-item:hover:not(:disabled) {
     border-color: color-mix(in srgb, var(--primary-color) 45%, var(--freebox-border));
     transform: translateY(-1px);
   }
@@ -152,7 +155,9 @@ export const cardStyles = css`
   .action-button:focus-visible,
   .control:focus-visible,
   .metric-button:focus-visible,
-  .client:focus-visible {
+  .client:focus-visible,
+  .equipment-item:focus-visible,
+  .more-button:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
   }
@@ -283,7 +288,7 @@ export const cardStyles = css`
   .stat-top {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--freebox-icon-gap);
     min-width: 0;
     color: var(--secondary-text-color);
     font-size: 0.72rem;
@@ -292,6 +297,7 @@ export const cardStyles = css`
   .stat-top ha-icon {
     width: 17px;
     height: 17px;
+    flex: 0 0 auto;
     color: var(--primary-color);
   }
 
@@ -338,12 +344,14 @@ export const cardStyles = css`
   .panel-title {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: var(--freebox-icon-gap);
+    min-width: 0;
   }
 
   .panel-title ha-icon {
     width: 19px;
     height: 19px;
+    flex: 0 0 auto;
     color: var(--primary-color);
   }
 
@@ -377,6 +385,7 @@ export const cardStyles = css`
   .metric-list,
   .storage-list,
   .client-list,
+  .equipment-list,
   .controls-list {
     display: grid;
     gap: 8px;
@@ -491,10 +500,91 @@ export const cardStyles = css`
     height: 7px;
   }
 
-  .more {
+  .more-button {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 7px;
+    border: 0;
+    background: transparent;
     color: var(--secondary-text-color);
     font-size: 0.76rem;
     text-align: center;
+    cursor: pointer;
+  }
+
+  .more-button:hover {
+    color: var(--primary-text-color);
+  }
+
+  .more-button ha-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .equipment-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 12px;
+    text-align: start;
+  }
+
+  .equipment-label,
+  .equipment-state {
+    display: flex;
+    align-items: center;
+  }
+
+  .equipment-label {
+    gap: var(--freebox-icon-gap);
+    min-width: 0;
+  }
+
+  .equipment-label > ha-icon {
+    width: 21px;
+    height: 21px;
+    flex: 0 0 auto;
+    color: var(--primary-color);
+  }
+
+  .equipment-copy {
+    display: grid;
+    min-width: 0;
+  }
+
+  .equipment-copy strong,
+  .equipment-copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .equipment-copy strong {
+    font-size: 0.82rem;
+  }
+
+  .equipment-copy small {
+    margin-top: 2px;
+    color: var(--secondary-text-color);
+    font-size: 0.7rem;
+  }
+
+  .equipment-state {
+    flex: 0 0 auto;
+    gap: 7px;
+    color: var(--secondary-text-color);
+    font-size: 0.76rem;
+  }
+
+  .equipment-state .status-dot {
+    width: 7px;
+    height: 7px;
   }
 
   .control {
@@ -510,13 +600,14 @@ export const cardStyles = css`
   .control-label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--freebox-icon-gap);
     min-width: 0;
   }
 
   .control-label ha-icon {
     width: 20px;
     height: 20px;
+    flex: 0 0 auto;
   }
 
   .control-state {
@@ -558,7 +649,7 @@ export const cardStyles = css`
     width: 100%;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--freebox-icon-gap);
     padding: 10px 12px;
     border-radius: 13px;
   }
@@ -661,8 +752,13 @@ export const editorStyles = css`
   }
 
   input,
-  select {
+  select,
+  ha-entity-picker {
     width: 100%;
+  }
+
+  input,
+  select {
     min-height: 42px;
     padding: 8px 10px;
     border: 1px solid var(--divider-color);
@@ -670,6 +766,12 @@ export const editorStyles = css`
     background: var(--card-background-color);
     color: var(--primary-text-color);
     font: inherit;
+  }
+
+  label > small {
+    color: var(--secondary-text-color);
+    font-size: 0.74rem;
+    line-height: 1.35;
   }
 
   fieldset {

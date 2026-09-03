@@ -1,6 +1,6 @@
 {
   "name": "freebox-pop-card",
-  "version": "2026.9.1",
+  "version": "2026.9.2",
   "description": "A modern Home Assistant dashboard card for the Freebox Pop Server",
   "type": "module",
   "scripts": {

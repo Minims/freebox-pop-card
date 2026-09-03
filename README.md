@@ -19,14 +19,23 @@ and does not connect to the router directly from the browser.
   </a>
 </p>
 
+## Preview
+
+<p align="center">
+  <img src="docs/images/freebox-pop-card-preview.svg" alt="Preview of the Freebox Pop Card" width="600">
+</p>
+
 ## Features
 
 - Automatic Freebox Server and entity discovery by Home Assistant `device_id`; renamed entity IDs work.
 - Live upload and download rates using Home Assistant's localized unit formatting.
 - WAN details: IPv4, IPv6, access type, and connection uptime when exposed.
 - Separate system uptime display, without confusing it with the Internet connection uptime.
-- Temperatures, fan speeds, attached storage, RAID health, missed calls, and connected-client summary.
-- Wi-Fi control, Freebox OS shortcut, mark-calls-read action, and protected Server reboot.
+- Temperatures, fan speeds, attached storage, RAID health, missed calls, and an expandable
+  connected-client list.
+- Player, Wi-Fi repeater, and DECT-phone online state when detected through Freebox device trackers.
+- Wi-Fi control, Freebox OS shortcut, mark-calls-read action, protected Server reboot, and optional
+  hardware power cycle through a Zigbee plug.
 - Compact, overview, and detailed layouts for Sections dashboards and mobile screens.
 - English and French interface, Home Assistant theme support, and a visual card editor.
 - Capability-driven rendering: unavailable sections are omitted instead of showing broken controls.
@@ -80,20 +89,26 @@ show_clients: true
 show_controls: true
 confirm_actions: true
 max_clients: 6
+show_equipment: true
+hard_reboot_entity: switch.freebox_power # optional Zigbee plug supplying the Server
+hard_reboot_delay: 15 # seconds, from 5 to 300
 ```
 
-| Option            | Default     | Description                                                     |
-| ----------------- | ----------- | --------------------------------------------------------------- |
-| `device_id`       | automatic   | Home Assistant device-registry ID; required with several boxes. |
-| `title`           | device name | Optional card title.                                            |
-| `view`            | `overview`  | `compact`, `overview`, or single-column `detailed`.             |
-| `show_connection` | `true`      | Shows WAN addresses, access type, and connection uptime.        |
-| `show_system`     | `true`      | Shows temperatures, fans, and missed calls.                     |
-| `show_storage`    | `true`      | Shows attached partitions and RAID health.                      |
-| `show_clients`    | `true`      | Shows devices currently connected to this Freebox.              |
-| `show_controls`   | `true`      | Shows Wi-Fi, Freebox OS, call, and reboot actions.              |
-| `confirm_actions` | `true`      | Confirms Wi-Fi shutdown and Server reboot.                      |
-| `max_clients`     | `6`         | Number of connected clients displayed, from 0 to 20.            |
+| Option               | Default     | Description                                                     |
+| -------------------- | ----------- | --------------------------------------------------------------- |
+| `device_id`          | automatic   | Home Assistant device-registry ID; required with several boxes. |
+| `title`              | device name | Optional card title.                                            |
+| `view`               | `overview`  | `compact`, `overview`, or single-column `detailed`.             |
+| `show_connection`    | `true`      | Shows WAN addresses, access type, and connection uptime.        |
+| `show_system`        | `true`      | Shows temperatures, fans, and missed calls.                     |
+| `show_storage`       | `true`      | Shows attached partitions and RAID health.                      |
+| `show_clients`       | `true`      | Shows devices currently connected to this Freebox.              |
+| `show_equipment`     | `true`      | Shows detected Player, Wi-Fi repeater, and DECT-phone state.    |
+| `show_controls`      | `true`      | Shows Wi-Fi, Freebox OS, call, and reboot actions.              |
+| `confirm_actions`    | `true`      | Confirms Wi-Fi shutdown and Server reboot.                      |
+| `max_clients`        | `6`         | Number of connected clients displayed, from 0 to 20.            |
+| `hard_reboot_entity` | empty       | Optional `switch` entity for the Freebox power plug.            |
+| `hard_reboot_delay`  | `15`        | Plug off-duration, in seconds; clamped between 5 and 300.       |
 
 ## Current Freebox integration limits
 
@@ -107,7 +122,16 @@ uptime**. A separate **Connection uptime** row is kept distinct and reports that
 Home Assistant provides that value.
 
 Connected-client detection depends on the `device_tracker` entities created by the official Freebox
-integration. Disabled entities are not displayed.
+integration. Disabled entities are not displayed. The Player, repeater, and phone panel is populated
+only when those trackers are identifiable from their Freebox metadata, icon, or label.
+
+## Optional hard reboot
+
+Set `hard_reboot_entity` to the **switch entity of the Zigbee plug that powers the Freebox Server**.
+The hard-reboot button is available to Home Assistant administrators only, asks for confirmation, and
+sends the complete off → wait → on sequence to Home Assistant. This means the plug is restored even if
+the browser loses access while the Freebox is powered off. Use a dedicated plug and do not enable this
+option for a shared power strip.
 
 ## Development
 
@@ -127,8 +151,8 @@ Source files live under `src/`. The HACS bundle is generated at
 ## Privacy and safety
 
 Do not include public IP addresses, serial numbers, MAC addresses, or unredacted Home Assistant
-diagnostics in issues or screenshots. Wi-Fi shutdown and reboot can interrupt access to Home Assistant;
-confirmations are enabled by default.
+diagnostics in issues or screenshots. Wi-Fi shutdown, reboot, and hard reboot can interrupt access to
+Home Assistant; confirmations are enabled by default.
 
 Freebox and Free are trademarks of their respective owner. This independent project is not affiliated
 with or endorsed by Free.

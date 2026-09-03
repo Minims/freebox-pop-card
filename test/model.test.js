@@ -6,6 +6,7 @@ import {
   discoverDevices,
   formatEntityState,
   formatUptime,
+  inferEquipmentKind,
   inferFunctionId,
   isActionAvailable,
   normalizeConfig,
@@ -52,8 +53,8 @@ function createHass() {
       device_id: "router-1",
       config_entry_id: "entry-1",
     },
-    "button.freebox_v8_r1_restart": {
-      entity_id: "button.freebox_v8_r1_restart",
+    "button.reboot_freebox": {
+      entity_id: "button.reboot_freebox",
       unique_id: "AA:BB:CC:DD:EE:FF",
       device_class: "restart",
       platform: "freebox",
@@ -147,7 +148,7 @@ function createHass() {
         },
       },
       "switch.renamed_wifi": { state: "on", attributes: {} },
-      "button.freebox_v8_r1_restart": {
+      "button.reboot_freebox": {
         state: "unknown",
         attributes: { device_class: "restart" },
       },
@@ -216,8 +217,8 @@ describe("Freebox entity discovery", () => {
     ).toBe("wifi");
     expect(
       inferFunctionId(
-        hass.entities["button.freebox_v8_r1_restart"],
-        hass.states["button.freebox_v8_r1_restart"],
+        hass.entities["button.reboot_freebox"],
+        hass.states["button.reboot_freebox"],
       ),
     ).toBe("reboot");
   });
@@ -236,6 +237,48 @@ describe("Freebox entity discovery", () => {
         hass.states["sensor.renamed_fan"],
       ),
     ).toBe("fan");
+  });
+
+  it("classifies Freebox equipment from tracker metadata and labels", () => {
+    const hass = createHass();
+    const tracker = {
+      entity_id: "device_tracker.freebox_player_pop",
+      platform: "freebox",
+      config_entry_id: "entry-1",
+    };
+    expect(
+      inferEquipmentKind(
+        tracker,
+        {
+          state: "home",
+          attributes: {
+            friendly_name: "Living room box",
+            icon: "mdi:television-guide",
+          },
+        },
+        hass,
+      ),
+    ).toBe("player");
+    expect(
+      inferEquipmentKind(
+        { ...tracker, entity_id: "device_tracker.repeater" },
+        {
+          state: "not_home",
+          attributes: { friendly_name: "Répéteur Wi-Fi étage" },
+        },
+        hass,
+      ),
+    ).toBe("repeater");
+    expect(
+      inferEquipmentKind(
+        { ...tracker, entity_id: "device_tracker.phone" },
+        {
+          state: "home",
+          attributes: { friendly_name: "Téléphone DECT" },
+        },
+        hass,
+      ),
+    ).toBe("phone");
   });
 });
 
@@ -278,19 +321,61 @@ describe("Freebox model", () => {
     hass.devices["router-2"] = { id: "router-2", name: "Second Freebox" };
     expect(buildModel(hass, {}).deviceId).toBe("");
   });
+
+  it("exposes active and inactive Freebox equipment from device trackers", () => {
+    const hass = createHass();
+    const equipment = [
+      ["player", "Freebox Player POP", "home", "mdi:television-guide"],
+      ["repeater", "Répéteur Wi-Fi", "not_home", "mdi:network"],
+      ["phone", "Téléphone DECT", "home", "mdi:phone-voip"],
+    ];
+    for (const [id, name, state, icon] of equipment) {
+      const entityId = `device_tracker.${id}`;
+      hass.entities[entityId] = {
+        entity_id: entityId,
+        unique_id: `AA:BB ${id}`,
+        platform: "freebox",
+        config_entry_id: "entry-1",
+      };
+      hass.states[entityId] = {
+        state,
+        attributes: { friendly_name: name, icon },
+      };
+    }
+
+    expect(
+      buildModel(hass, {}).equipment.map(({ kind, connected }) => ({
+        kind,
+        connected,
+      })),
+    ).toEqual([
+      { kind: "player", connected: true },
+      { kind: "repeater", connected: false },
+      { kind: "phone", connected: true },
+    ]);
+  });
 });
 
 describe("display helpers", () => {
   it("normalizes configuration and clamps the client limit", () => {
     expect(
-      normalizeConfig({ view: "invalid", max_clients: 99, show_system: false }),
+      normalizeConfig({
+        view: "invalid",
+        max_clients: 99,
+        show_system: false,
+        hard_reboot_entity: "switch.freebox_power",
+        hard_reboot_delay: 1,
+      }),
     ).toMatchObject({
       type: "custom:freebox-pop-card",
       view: "overview",
       max_clients: 20,
       show_system: false,
+      show_equipment: true,
       show_controls: true,
       confirm_actions: true,
+      hard_reboot_entity: "switch.freebox_power",
+      hard_reboot_delay: 5,
     });
   });
 

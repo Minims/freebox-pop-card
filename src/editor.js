@@ -41,6 +41,7 @@ export class FreeboxPopCardEditor extends LitElement {
       ["show_system", "show_system"],
       ["show_storage", "show_storage"],
       ["show_clients", "show_clients"],
+      ["show_equipment", "show_equipment"],
       ["show_controls", "show_controls"],
       ["confirm_actions", "confirm_actions"],
     ];
@@ -94,6 +95,38 @@ export class FreeboxPopCardEditor extends LitElement {
               this._update("max_clients", Number(event.currentTarget.value))}
           />
         </label>
+        <label>
+          ${this._t("hard_reboot_entity")}
+          <ha-entity-picker
+            .hass=${this.hass}
+            .value=${this._config.hard_reboot_entity}
+            .includeDomains=${["switch"]}
+            allow-custom-entity
+            @value-changed=${(event) =>
+              this._update("hard_reboot_entity", event.detail.value || "")}
+          ></ha-entity-picker>
+          <small>${this._t("hard_reboot_help")}</small>
+        </label>
+        ${
+          this._config.hard_reboot_entity
+            ? html`
+                <label>
+                  ${this._t("hard_reboot_delay")}
+                  <input
+                    type="number"
+                    min="5"
+                    max="300"
+                    .value=${String(this._config.hard_reboot_delay)}
+                    @change=${(event) =>
+                      this._update(
+                        "hard_reboot_delay",
+                        Number(event.currentTarget.value),
+                      )}
+                  />
+                </label>
+              `
+            : nothing
+        }
         <fieldset>
           <legend>${this._t("options")}</legend>
           ${checkboxes.map(

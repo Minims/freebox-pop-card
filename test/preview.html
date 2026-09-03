@@ -96,6 +96,13 @@
           device_id: "router",
           config_entry_id: "entry",
         },
+        "button.freebox_mark_calls_as_read": {
+          entity_id: "button.freebox_mark_calls_as_read",
+          unique_id: "AA mark_calls_as_read",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
         "device_tracker.freebox": {
           entity_id: "device_tracker.freebox",
           unique_id: "AA",
@@ -108,6 +115,18 @@
           unique_id: "BB",
           platform: "freebox",
           device_id: "phone",
+          config_entry_id: "entry",
+        },
+        "device_tracker.player": {
+          entity_id: "device_tracker.player",
+          unique_id: "CC",
+          platform: "freebox",
+          config_entry_id: "entry",
+        },
+        "device_tracker.repeater": {
+          entity_id: "device_tracker.repeater",
+          unique_id: "DD",
+          platform: "freebox",
           config_entry_id: "entry",
         },
       };
@@ -136,7 +155,11 @@
           attributes: { friendly_name: "Ventilateur", unit_of_measurement: "rpm" },
         },
         "switch.freebox_wifi": { state: "on", attributes: {} },
-        "button.freebox_reboot": { state: "unknown", attributes: {} },
+        "button.freebox_reboot": {
+          state: "unknown",
+          attributes: { device_class: "restart" },
+        },
+        "button.freebox_mark_calls_as_read": { state: "unknown", attributes: {} },
         "device_tracker.freebox": {
           state: "home",
           attributes: {
@@ -148,11 +171,25 @@
         },
         "device_tracker.phone": {
           state: "home",
-          attributes: { friendly_name: "11:22:33:44:55:66 Téléphone" },
+          attributes: {
+            friendly_name: "11:22:33:44:55:66 Téléphone DECT",
+            icon: "mdi:phone-voip",
+          },
+        },
+        "device_tracker.player": {
+          state: "home",
+          attributes: {
+            friendly_name: "Freebox Player POP",
+            icon: "mdi:television-guide",
+          },
+        },
+        "device_tracker.repeater": {
+          state: "not_home",
+          attributes: { friendly_name: "Répéteur Wi-Fi" },
         },
       };
       const card = document.querySelector("freebox-pop-card");
-      card.setConfig({ type: "custom:freebox-pop-card" });
+      card.setConfig({ type: "custom:freebox-pop-card", max_clients: 1 });
       card.hass = {
         language: "fr",
         entities,

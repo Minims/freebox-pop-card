@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## 2026.9.2
+
+- Keep **Mark calls as read** available whenever the official Freebox action is exposed.
+- Let the supplemental-client link expand and collapse the complete connected-client list.
+- Align icons and labels consistently across metrics, panels, controls, and actions.
+- Add a Freebox equipment panel that reports Player, Wi-Fi repeater, and DECT phone activity from
+  official `device_tracker` entities.
+- Add an optional, confirmed hard-reboot action for a configured Freebox power plug. The off → delay →
+  on sequence runs in Home Assistant, not in the browser.
+
 ## 2026.9.1
 
 - Make responsive breakpoints follow the card width instead of the browser window.

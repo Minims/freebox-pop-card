@@ -18,12 +18,18 @@ export class FreeboxPopCard extends LitElement {
   static properties = {
     hass: { attribute: false },
     _config: { state: true },
+    _clientsExpanded: { state: true },
+    _hardRebootRunning: { state: true },
   };
 
   static styles = cardStyles;
 
   setConfig(config) {
-    this._config = normalizeConfig(config);
+    const normalized = normalizeConfig(config);
+    if (this._config?.device_id !== normalized.device_id) {
+      this._clientsExpanded = false;
+    }
+    this._config = normalized;
   }
 
   getCardSize() {
@@ -87,6 +93,59 @@ export class FreeboxPopCard extends LitElement {
     if (!entity || !isActionAvailable(this._state(entity))) return;
     if (confirmation && !this._confirmed(confirmation)) return;
     this.hass.callService("button", "press", { entity_id: entity.entity_id });
+  }
+
+  _notify(message) {
+    this.dispatchEvent(
+      new CustomEvent("hass-notification", {
+        bubbles: true,
+        composed: true,
+        detail: { message },
+      }),
+    );
+  }
+
+  async _hardReboot() {
+    const entityId = this._config.hard_reboot_entity;
+    const state = this.hass?.states?.[entityId];
+    if (!entityId || state?.state !== "on" || this._hardRebootRunning) return;
+
+    const confirmation = this._t("confirm_hard_reboot").replace(
+      "{seconds}",
+      String(this._config.hard_reboot_delay),
+    );
+    if (!this._confirmed(confirmation)) return;
+
+    const message = {
+      type: "execute_script",
+      sequence: [
+        {
+          action: "switch.turn_off",
+          target: { entity_id: entityId },
+        },
+        { delay: { seconds: this._config.hard_reboot_delay } },
+        {
+          action: "switch.turn_on",
+          target: { entity_id: entityId },
+        },
+      ],
+    };
+
+    this._hardRebootRunning = true;
+    try {
+      if (typeof this.hass.callWS === "function") {
+        await this.hass.callWS(message);
+      } else if (typeof this.hass.connection?.sendMessagePromise === "function") {
+        await this.hass.connection.sendMessagePromise(message);
+      } else {
+        throw new Error("Home Assistant WebSocket API is unavailable");
+      }
+    } catch (error) {
+      console.error("Freebox Pop Card hard reboot failed", error);
+      this._notify(this._t("hard_reboot_failed"));
+    } finally {
+      this._hardRebootRunning = false;
+    }
   }
 
   _configurationUrl(model) {
@@ -423,9 +482,58 @@ export class FreeboxPopCard extends LitElement {
     `;
   }
 
+  _renderEquipment(model) {
+    if (!model.equipment.length) return nothing;
+    const icons = {
+      player: "mdi:television-play",
+      repeater: "mdi:access-point-network",
+      phone: "mdi:phone",
+    };
+
+    return html`
+      <section class="panel">
+        ${this._renderPanelHeader(this._t("equipment"), "mdi:router-network")}
+        <div class="equipment-list">
+          ${model.equipment.map((item) => {
+            const stateLabel = item.available
+              ? item.connected
+                ? this._t("active")
+                : this._t("inactive")
+              : this._t("unavailable");
+            return html`
+              <button
+                class="equipment-item"
+                @click=${() => this._showMoreInfo(item.entry)}
+              >
+                <span class="equipment-label">
+                  <ha-icon icon=${icons[item.kind]}></ha-icon>
+                  <span class="equipment-copy">
+                    <strong>${this._t(item.kind)}</strong>
+                    <small>${item.label}</small>
+                  </span>
+                </span>
+                <span class="equipment-state">
+                  <span
+                    class="status-dot ${
+                      item.available && item.connected ? "online" : ""
+                    }"
+                  ></span>
+                  ${stateLabel}
+                </span>
+              </button>
+            `;
+          })}
+        </div>
+      </section>
+    `;
+  }
+
   _renderClients(model) {
     const connected = model.clients.filter((client) => client.connected);
-    const displayed = connected.slice(0, this._config.max_clients);
+    const collapsible = connected.length > this._config.max_clients;
+    const displayed = this._clientsExpanded
+      ? connected
+      : connected.slice(0, this._config.max_clients);
     const remaining = connected.length - displayed.length;
     return html`
       <section class="panel">
@@ -444,8 +552,27 @@ export class FreeboxPopCard extends LitElement {
             `,
           )}
           ${
-            remaining > 0
-              ? html`<div class="more">+${remaining} ${this._t("more_clients")}</div>`
+            collapsible
+              ? html`
+                  <button
+                    class="more-button"
+                    aria-expanded=${this._clientsExpanded ? "true" : "false"}
+                    @click=${() => {
+                      this._clientsExpanded = !this._clientsExpanded;
+                    }}
+                  >
+                    <span
+                      >${
+                        this._clientsExpanded
+                          ? this._t("show_fewer_clients")
+                          : `+${remaining} ${this._t("more_clients")}`
+                      }</span
+                    >
+                    <ha-icon
+                      icon=${this._clientsExpanded ? "mdi:chevron-up" : "mdi:chevron-down"}
+                    ></ha-icon>
+                  </button>
+                `
               : nothing
           }
         </div>
@@ -459,9 +586,15 @@ export class FreeboxPopCard extends LitElement {
     const wifiOn = wifiState?.state === "on";
     const markRead = model.entities.mark_calls_as_read;
     const reboot = model.entities.reboot;
-    const missed = numericState(model.missedCalls?.state) || 0;
+    const hardReboot = this._config.hard_reboot_entity;
+    const hardRebootState = this.hass.states?.[hardReboot];
+    const hardRebootAvailable =
+      hardRebootState?.state === "on" &&
+      this.hass.user?.is_admin !== false &&
+      (typeof this.hass.callWS === "function" ||
+        typeof this.hass.connection?.sendMessagePromise === "function");
     const webAvailable = Boolean(this._configurationUrl(model));
-    if (!wifi && !markRead && !reboot && !webAvailable) return nothing;
+    if (!wifi && !markRead && !reboot && !hardReboot && !webAvailable) return nothing;
 
     return html`
       <section class="panel">
@@ -486,10 +619,10 @@ export class FreeboxPopCard extends LitElement {
               : nothing
           }
           ${
-            markRead && missed > 0
+            markRead
               ? html`
                   <button
-                    class="action-button"
+                    class="action-button mark-read-button"
                     ?disabled=${!isActionAvailable(this._state(markRead))}
                     @click=${() => this._press(markRead)}
                   >
@@ -512,11 +645,34 @@ export class FreeboxPopCard extends LitElement {
             reboot
               ? html`
                   <button
-                    class="action-button danger"
+                    class="action-button danger reboot-button"
                     ?disabled=${!isActionAvailable(this._state(reboot))}
                     @click=${() => this._press(reboot, this._t("confirm_reboot"))}
                   >
                     <ha-icon icon="mdi:restart"></ha-icon>${this._t("reboot")}
+                  </button>
+                `
+              : nothing
+          }
+          ${
+            hardReboot
+              ? html`
+                  <button
+                    class="action-button danger hard-reboot-button"
+                    title=${
+                      this.hass.user?.is_admin === false
+                        ? this._t("admin_required")
+                        : this._t("hard_reboot")
+                    }
+                    ?disabled=${!hardRebootAvailable || this._hardRebootRunning}
+                    @click=${() => this._hardReboot()}
+                  >
+                    <ha-icon icon="mdi:power-cycle"></ha-icon>
+                    ${
+                      this._hardRebootRunning
+                        ? this._t("hard_reboot_running")
+                        : this._t("hard_reboot")
+                    }
                   </button>
                 `
               : nothing
@@ -563,6 +719,11 @@ export class FreeboxPopCard extends LitElement {
                           : nothing
                       }
                       ${this._config.show_system ? this._renderSystem(model) : nothing}
+                      ${
+                        this._config.show_equipment
+                          ? this._renderEquipment(model)
+                          : nothing
+                      }
                       ${
                         this._config.show_storage ? this._renderStorage(model) : nothing
                       }

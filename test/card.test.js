@@ -16,8 +16,14 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function createCard(view = "overview") {
+function createCard({
+  view = "overview",
+  clientCount = 0,
+  hardReboot = false,
+  equipment = false,
+} = {}) {
   const callService = vi.fn();
+  const callWS = vi.fn(() => Promise.resolve());
   const entities = {
     "sensor.down": {
       entity_id: "sensor.down",
@@ -48,6 +54,13 @@ function createCard(view = "overview") {
       device_id: "router",
       config_entry_id: "entry",
     },
+    "button.freebox_mark_calls_as_read": {
+      entity_id: "button.freebox_mark_calls_as_read",
+      unique_id: "AA mark_calls_as_read",
+      platform: "freebox",
+      device_id: "router",
+      config_entry_id: "entry",
+    },
     "device_tracker.router": {
       entity_id: "device_tracker.router",
       unique_id: "AA",
@@ -70,6 +83,7 @@ function createCard(view = "overview") {
       state: "unknown",
       attributes: { device_class: "restart" },
     },
+    "button.freebox_mark_calls_as_read": { state: "unknown", attributes: {} },
     "device_tracker.router": {
       state: "home",
       attributes: {
@@ -80,8 +94,51 @@ function createCard(view = "overview") {
       },
     },
   };
+
+  for (let index = 1; index <= clientCount; index += 1) {
+    const entityId = `device_tracker.client_${index}`;
+    entities[entityId] = {
+      entity_id: entityId,
+      unique_id: `BB:CC:DD:EE:FF:${String(index).padStart(2, "0")}`,
+      platform: "freebox",
+      config_entry_id: "entry",
+    };
+    states[entityId] = {
+      state: "home",
+      attributes: { friendly_name: `Client ${index}` },
+    };
+  }
+
+  if (equipment) {
+    const items = [
+      ["player", "Freebox Player POP", "home", "mdi:television-guide"],
+      ["repeater", "Répéteur Wi-Fi", "not_home", "mdi:network"],
+      ["phone", "Téléphone DECT", "home", "mdi:phone-voip"],
+    ];
+    for (const [id, name, state, icon] of items) {
+      const entityId = `device_tracker.${id}`;
+      entities[entityId] = {
+        entity_id: entityId,
+        unique_id: `DD:EE:FF ${id}`,
+        platform: "freebox",
+        config_entry_id: "entry",
+      };
+      states[entityId] = { state, attributes: { friendly_name: name, icon } };
+    }
+  }
+
+  if (hardReboot) {
+    states["switch.freebox_power"] = { state: "on", attributes: {} };
+  }
+
   const card = document.createElement("freebox-pop-card-test");
-  card.setConfig({ type: "custom:freebox-pop-card", view });
+  card.setConfig({
+    type: "custom:freebox-pop-card",
+    view,
+    max_clients: 2,
+    hard_reboot_entity: hardReboot ? "switch.freebox_power" : "",
+    hard_reboot_delay: 12,
+  });
   card.hass = {
     language: "fr",
     entities,
@@ -95,9 +152,11 @@ function createCard(view = "overview") {
       },
     },
     callService,
+    callWS,
+    user: { is_admin: true },
   };
   document.body.append(card);
-  return { card, callService };
+  return { card, callService, callWS };
 }
 
 describe("Freebox Pop card", () => {
@@ -112,6 +171,7 @@ describe("Freebox Pop card", () => {
     expect(text).toContain("Uptime système");
     expect(text).toContain("Uptime connexion");
     expect(text).toContain("Non exposé");
+    expect(text).toContain("Marquer les appels comme lus");
   });
 
   it("confirms Wi-Fi shutdown and Server reboot", async () => {
@@ -133,10 +193,80 @@ describe("Freebox Pop card", () => {
   });
 
   it("keeps the compact layout focused on summary metrics", async () => {
-    const { card } = createCard("compact");
+    const { card } = createCard({ view: "compact" });
     await card.updateComplete;
     expect(card.shadowRoot.querySelector(".stats")).not.toBeNull();
     expect(card.shadowRoot.querySelector(".hero")).toBeNull();
     expect(card.shadowRoot.querySelector(".panel")).toBeNull();
+  });
+
+  it("marks calls as read even when the missed-call count is zero", async () => {
+    const { card, callService } = createCard();
+    await card.updateComplete;
+
+    card.shadowRoot.querySelector(".mark-read-button").click();
+
+    expect(callService).toHaveBeenCalledWith("button", "press", {
+      entity_id: "button.freebox_mark_calls_as_read",
+    });
+  });
+
+  it("expands and collapses supplementary clients", async () => {
+    const { card } = createCard({ clientCount: 4 });
+    await card.updateComplete;
+
+    expect(card.shadowRoot.querySelectorAll(".client")).toHaveLength(2);
+    const more = card.shadowRoot.querySelector(".more-button");
+    expect(more.textContent).toContain("+2 clients supplémentaires");
+    more.click();
+    await card.updateComplete;
+
+    expect(card.shadowRoot.querySelectorAll(".client")).toHaveLength(4);
+    expect(card.shadowRoot.querySelector(".more-button").textContent).toContain(
+      "Afficher moins de clients",
+    );
+  });
+
+  it("shows Freebox equipment states and runs the hard reboot from Home Assistant", async () => {
+    const confirm = vi.fn(() => true);
+    window.confirm = confirm;
+    const { card, callWS } = createCard({ hardReboot: true, equipment: true });
+    await card.updateComplete;
+
+    const text = card.shadowRoot.textContent.replaceAll(/\s+/g, " ");
+    expect(text).toContain("Équipements Freebox");
+    const equipmentItems = [...card.shadowRoot.querySelectorAll(".equipment-item")].map(
+      (item) => item.textContent.replaceAll(/\s+/g, " "),
+    );
+    expect(equipmentItems).toContainEqual(
+      expect.stringContaining("Freebox Player POP Actif"),
+    );
+    expect(equipmentItems).toContainEqual(
+      expect.stringContaining("Répéteur Wi-Fi Inactif"),
+    );
+    expect(equipmentItems).toContainEqual(
+      expect.stringContaining("Téléphone DECT Actif"),
+    );
+
+    card.shadowRoot.querySelector(".hard-reboot-button").click();
+    await Promise.resolve();
+
+    expect(confirm).toHaveBeenCalledWith(
+      expect.stringContaining("pendant 12 secondes"),
+    );
+    expect(callWS).toHaveBeenCalledWith({
+      type: "execute_script",
+      sequence: [
+        {
+          action: "switch.turn_off",
+          target: { entity_id: "switch.freebox_power" },
+        },
+        { delay: { seconds: 12 } },
+        {
+          action: "switch.turn_on",
+          target: { entity_id: "switch.freebox_power" },
+        },
+      ],
+    });
   });
 });

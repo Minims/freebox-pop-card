@@ -24,6 +24,11 @@ export function normalizeConfig(config = {}) {
   const maxClients = Number.isFinite(parsedMaxClients)
     ? Math.min(20, Math.max(0, Math.trunc(parsedMaxClients)))
     : 6;
+  const parsedHardRebootDelay = Number(config.hard_reboot_delay);
+  const hardRebootDelay = Number.isFinite(parsedHardRebootDelay)
+    ? Math.min(300, Math.max(5, Math.trunc(parsedHardRebootDelay)))
+    : 15;
+  const hardRebootEntity = String(config.hard_reboot_entity || "").trim();
 
   return {
     type: "custom:freebox-pop-card",
@@ -36,9 +41,12 @@ export function normalizeConfig(config = {}) {
     show_system: config.show_system !== false,
     show_storage: config.show_storage !== false,
     show_clients: config.show_clients !== false,
+    show_equipment: config.show_equipment !== false,
     show_controls: config.show_controls !== false,
     confirm_actions: config.confirm_actions !== false,
     max_clients: maxClients,
+    hard_reboot_entity: hardRebootEntity.startsWith("switch.") ? hardRebootEntity : "",
+    hard_reboot_delay: hardRebootDelay,
   };
 }
 
@@ -156,6 +164,42 @@ function entityLabel(entry, state, hass) {
   return compactLabel(label, [device.name_by_user, device.name]);
 }
 
+function searchableEquipmentText(entry, state, hass) {
+  const device = hass?.devices?.[entry?.device_id] || {};
+  return [
+    state?.attributes?.friendly_name,
+    entry?.name,
+    entry?.original_name,
+    device.name_by_user,
+    device.name,
+    device.model,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .normalize("NFD")
+    .replaceAll(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
+export function inferEquipmentKind(entry, state, hass) {
+  if (entry?.entity_id?.split(".")[0] !== "device_tracker") return undefined;
+
+  const icon = String(state?.attributes?.icon || entry?.icon || "").toLowerCase();
+  const source = searchableEquipmentText(entry, state, hass);
+
+  if (icon === "mdi:television-guide" || /\bplayer\b/.test(source)) {
+    return "player";
+  }
+  if (/\b(repeteur|repeater)\b/.test(source)) return "repeater";
+  if (
+    icon === "mdi:phone-voip" ||
+    /\b(telephone|fixed phone|landline|phone fixe)\b/.test(source)
+  ) {
+    return "phone";
+  }
+  return undefined;
+}
+
 function entryConfigIds(entry) {
   return new Set(
     [entry?.config_entry_id, ...(entry?.config_entry_ids || [])].filter(Boolean),
@@ -265,6 +309,18 @@ export function buildModel(hass, rawConfig = {}) {
         Number(right.connected) - Number(left.connected) ||
         left.label.localeCompare(right.label),
     );
+  const equipment = clients
+    .map((client) => ({
+      ...client,
+      kind: inferEquipmentKind(client.entry, client.state, hass),
+    }))
+    .filter((item) => item.kind)
+    .sort(
+      (left, right) =>
+        ["player", "repeater", "phone"].indexOf(left.kind) -
+          ["player", "repeater", "phone"].indexOf(right.kind) ||
+        left.label.localeCompare(right.label),
+    );
 
   const device = hass?.devices?.[deviceId] || {};
   const router = metric(entities.router_tracker, hass);
@@ -305,6 +361,7 @@ export function buildModel(hass, rawConfig = {}) {
     partitions: toMetricList(partitions, hass),
     raids: toMetricList(raids, hass),
     clients,
+    equipment,
     connectedClients: clients.filter((client) => client.connected).length,
   };
 }
