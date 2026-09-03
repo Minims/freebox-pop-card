@@ -20,6 +20,7 @@ export const cardStyles = css`
   }
 
   ha-card {
+    container-type: inline-size;
     overflow: hidden;
     color: var(--primary-text-color);
   }
@@ -419,6 +420,12 @@ export const cardStyles = css`
     margin-top: 0;
   }
 
+  .system-uptime {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--freebox-border);
+  }
+
   .storage-item {
     padding: 10px;
     border: 1px solid var(--freebox-border);
@@ -576,7 +583,7 @@ export const cardStyles = css`
     color: var(--disabled-text-color);
   }
 
-  @media (max-width: 600px) {
+  @container (max-width: 600px) {
     .header {
       padding-inline: 16px;
     }
@@ -616,7 +623,7 @@ export const cardStyles = css`
     }
   }
 
-  @media (max-width: 390px) {
+  @container (max-width: 390px) {
     .hero {
       grid-template-columns: 1fr;
     }

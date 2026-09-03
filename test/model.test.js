@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildModel,
+  compactLabel,
   discoverDevices,
   formatEntityState,
   formatUptime,
@@ -51,9 +52,10 @@ function createHass() {
       device_id: "router-1",
       config_entry_id: "entry-1",
     },
-    "button.renamed_reboot": {
-      entity_id: "button.renamed_reboot",
-      unique_id: "AA:BB:CC:DD:EE:FF reboot",
+    "button.freebox_v8_r1_restart": {
+      entity_id: "button.freebox_v8_r1_restart",
+      unique_id: "AA:BB:CC:DD:EE:FF",
+      device_class: "restart",
       platform: "freebox",
       device_id: "router-1",
       config_entry_id: "entry-1",
@@ -132,7 +134,7 @@ function createHass() {
       "sensor.renamed_temperature": {
         state: "52.4",
         attributes: {
-          friendly_name: "Freebox CPU temperature",
+          friendly_name: "Freebox Pop CPU temperature",
           device_class: "temperature",
           unit_of_measurement: "°C",
         },
@@ -145,7 +147,10 @@ function createHass() {
         },
       },
       "switch.renamed_wifi": { state: "on", attributes: {} },
-      "button.renamed_reboot": { state: "unknown", attributes: {} },
+      "button.freebox_v8_r1_restart": {
+        state: "unknown",
+        attributes: { device_class: "restart" },
+      },
       "device_tracker.renamed_router": {
         state: "home",
         attributes: {
@@ -160,7 +165,7 @@ function createHass() {
       "sensor.renamed_partition": {
         state: "72.5",
         attributes: {
-          friendly_name: "Media free space",
+          friendly_name: "Disk 0 Media free space",
           unit_of_measurement: "%",
         },
       },
@@ -170,7 +175,7 @@ function createHass() {
       },
       "device_tracker.phone": {
         state: "home",
-        attributes: { friendly_name: "Alex’s phone" },
+        attributes: { friendly_name: "11:22:33:44:55:66 Alex’s phone" },
       },
       "device_tracker.other_network": {
         state: "home",
@@ -209,6 +214,12 @@ describe("Freebox entity discovery", () => {
         hass.states["switch.renamed_wifi"],
       ),
     ).toBe("wifi");
+    expect(
+      inferFunctionId(
+        hass.entities["button.freebox_v8_r1_restart"],
+        hass.states["button.freebox_v8_r1_restart"],
+      ),
+    ).toBe("reboot");
   });
 
   it("classifies variable system sensors from their state metadata", () => {
@@ -240,11 +251,15 @@ describe("Freebox model", () => {
     expect(model.download.state.state).toBe("12500");
     expect(model.wifi.state.state).toBe("on");
     expect(model.temperatures).toHaveLength(1);
+    expect(model.temperatures[0].label).toBe("CPU temperature");
     expect(model.fans).toHaveLength(1);
     expect(model.partitions).toHaveLength(1);
+    expect(model.partitions[0].label).toBe("Media free space");
     expect(model.raids).toHaveLength(1);
     expect(model.clients.map((client) => client.label)).toEqual(["Alex’s phone"]);
     expect(model.connectedClients).toBe(1);
+    expect(model.systemUptime).toBe("2026-09-01T08:00:00+00:00");
+    expect(model.connectionUptime).toBeUndefined();
   });
 
   it("does not guess a device when several routers exist", () => {
@@ -292,6 +307,17 @@ describe("display helpers", () => {
     vi.setSystemTime(new Date("2026-09-03T10:35:00Z"));
     expect(formatUptime("2026-09-01T08:00:00Z", (key) => key)).toBe("2 day 2 hour");
     expect(formatUptime("invalid", (key) => key)).toBe("invalid");
+    expect(formatUptime(7_800, (key) => key)).toBe("2 hour 10 minute");
+  });
+
+  it("removes device and MAC prefixes without losing meaningful names", () => {
+    expect(compactLabel("Freebox v8 (r1) Température CPU", ["Freebox v8 (r1)"])).toBe(
+      "Température CPU",
+    );
+    expect(compactLabel("00:76:B1:05:44:A5 Somfy volet")).toBe("Somfy volet");
+    expect(compactLabel("Freebox v8 (r1)", ["Freebox v8 (r1)"])).toBe(
+      "Freebox v8 (r1)",
+    );
   });
 
   it("handles numeric and button states", () => {

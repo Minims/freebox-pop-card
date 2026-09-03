@@ -23,7 +23,8 @@ and does not connect to the router directly from the browser.
 
 - Automatic Freebox Server and entity discovery by Home Assistant `device_id`; renamed entity IDs work.
 - Live upload and download rates using Home Assistant's localized unit formatting.
-- WAN details: IPv4, IPv6, access type, uptime, firmware, hardware revision, and serial number when exposed.
+- WAN details: IPv4, IPv6, access type, and connection uptime when exposed.
+- Separate system uptime display, without confusing it with the Internet connection uptime.
 - Temperatures, fan speeds, attached storage, RAID health, missed calls, and connected-client summary.
 - Wi-Fi control, Freebox OS shortcut, mark-calls-read action, and protected Server reboot.
 - Compact, overview, and detailed layouts for Sections dashboards and mobile screens.
@@ -86,7 +87,7 @@ max_clients: 6
 | `device_id`       | automatic   | Home Assistant device-registry ID; required with several boxes. |
 | `title`           | device name | Optional card title.                                            |
 | `view`            | `overview`  | `compact`, `overview`, or single-column `detailed`.             |
-| `show_connection` | `true`      | Shows WAN addresses, access type, and uptime.                   |
+| `show_connection` | `true`      | Shows WAN addresses, access type, and connection uptime.        |
 | `show_system`     | `true`      | Shows temperatures, fans, and missed calls.                     |
 | `show_storage`    | `true`      | Shows attached partitions and RAID health.                      |
 | `show_clients`    | `true`      | Shows devices currently connected to this Freebox.              |
@@ -100,6 +101,10 @@ The official integration does not currently expose individual Ethernet-port link
 speed, duplex, or per-port traffic. The card therefore does not invent or scrape those values. If Home
 Assistant adds entities for them in the future, they can be incorporated without moving Freebox
 authentication into the frontend.
+
+The integration currently exposes the Server boot time as `uptime`, which the card labels **System
+uptime**. A separate **Connection uptime** row is kept distinct and reports that it is not exposed until
+Home Assistant provides that value.
 
 Connected-client detection depends on the `device_tracker` entities created by the official Freebox
 integration. Disabled entities are not displayed.

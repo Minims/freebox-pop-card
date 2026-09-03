@@ -75,16 +75,27 @@ export function isActionAvailable(state) {
 
 export function inferFunctionId(entry, state) {
   const source = normalizedSource(entry);
-  const known = KNOWN_FUNCTIONS.find((candidate) =>
-    containsFunction(source, candidate),
-  );
-  if (known) return known;
-
   const domain = entry?.entity_id?.split(".")[0];
   const attributes = state?.attributes || {};
   const deviceClass = String(
     attributes.device_class || entry?.device_class || "",
   ).toLowerCase();
+
+  if (
+    domain === "button" &&
+    (deviceClass === "restart" ||
+      containsFunction(source, "restart") ||
+      containsFunction(source, "redemarrer") ||
+      containsFunction(source, "redémarrer"))
+  ) {
+    return "reboot";
+  }
+
+  const known = KNOWN_FUNCTIONS.find((candidate) =>
+    containsFunction(source, candidate),
+  );
+  if (known) return known;
+
   const unit = String(attributes.unit_of_measurement || "").toLowerCase();
 
   if (domain === "device_tracker") {
@@ -112,14 +123,37 @@ function registryEntries(hass) {
   );
 }
 
-function entityLabel(entry, state) {
-  return (
+export function compactLabel(value, prefixes = []) {
+  const original = String(value || "").trim();
+  if (!original) return "";
+  let result = original.replace(
+    /^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}(?:\s+|\s*[-·]\s*)/i,
+    "",
+  );
+
+  for (const valuePrefix of prefixes) {
+    const prefix = String(valuePrefix || "").trim();
+    if (!prefix) continue;
+    if (result.toLocaleLowerCase().startsWith(prefix.toLocaleLowerCase())) {
+      const remainder = result.slice(prefix.length);
+      if (/^(?:\s+|\s*[-·:]\s*)/.test(remainder)) {
+        result = remainder.replace(/^(?:\s+|\s*[-·:]\s*)/, "").trim();
+      }
+    }
+  }
+
+  return result || original;
+}
+
+function entityLabel(entry, state, hass) {
+  const label =
     state?.attributes?.friendly_name ||
     entry?.name ||
     entry?.original_name ||
     entry?.entity_id ||
-    ""
-  );
+    "";
+  const device = hass?.devices?.[entry?.device_id] || {};
+  return compactLabel(label, [device.name_by_user, device.name]);
 }
 
 function entryConfigIds(entry) {
@@ -160,7 +194,7 @@ function metric(entry, hass) {
     entry,
     state,
     available: isAvailable(state),
-    label: entityLabel(entry, state),
+    label: entityLabel(entry, state, hass),
   };
 }
 
@@ -221,7 +255,7 @@ export function buildModel(hass, rawConfig = {}) {
       return {
         entry,
         state,
-        label: entityLabel(entry, state),
+        label: entityLabel(entry, state, hass),
         connected: state?.state === "home",
         available: Boolean(state && state.state !== "unavailable"),
       };
@@ -238,6 +272,13 @@ export function buildModel(hass, rawConfig = {}) {
   const upload = metric(entities.rate_up, hass);
   const wifi = metric(entities.wifi, hass);
   const missedCalls = metric(entities.missed, hass);
+  const systemUptime = connectionValue(router, ["system_uptime", "uptime"]);
+  const connectionUptime = connectionValue(router, [
+    "connection_uptime",
+    "connection_uptime_val",
+    "uptime_connection",
+    "connection_since",
+  ]);
   const online =
     router?.state?.state === "home" ||
     directEntries.some((entry) => isAvailable(entityState(hass, entry)));
@@ -257,6 +298,8 @@ export function buildModel(hass, rawConfig = {}) {
     upload,
     wifi,
     missedCalls,
+    systemUptime,
+    connectionUptime,
     temperatures: toMetricList(temperatures, hass),
     fans: toMetricList(fans, hass),
     partitions: toMetricList(partitions, hass),
@@ -264,6 +307,12 @@ export function buildModel(hass, rawConfig = {}) {
     clients,
     connectedClients: clients.filter((client) => client.connected).length,
   };
+}
+
+function connectionValue(router, keys) {
+  const attributes = router?.state?.attributes || {};
+  const key = keys.find((candidate) => attributes[candidate] !== undefined);
+  return key ? attributes[key] : undefined;
 }
 
 export function formatEntityState(hass, state) {
@@ -288,9 +337,18 @@ export function numericState(state) {
 
 export function formatUptime(value, translate = (key) => key) {
   if (!value) return "—";
-  const bootTime = new Date(value).getTime();
-  if (!Number.isFinite(bootTime)) return String(value);
-  const totalMinutes = Math.max(0, Math.floor((Date.now() - bootTime) / 60000));
+  const numeric = Number(value);
+  let totalMinutes;
+  if (Number.isFinite(numeric) && String(value).trim() !== "") {
+    totalMinutes =
+      numeric > 1_000_000_000
+        ? Math.max(0, Math.floor((Date.now() - numeric * 1000) / 60000))
+        : Math.max(0, Math.floor(numeric / 60));
+  } else {
+    const bootTime = new Date(value).getTime();
+    if (!Number.isFinite(bootTime)) return String(value);
+    totalMinutes = Math.max(0, Math.floor((Date.now() - bootTime) / 60000));
+  }
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
   const minutes = totalMinutes % 60;

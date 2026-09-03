@@ -199,7 +199,7 @@ export class FreeboxPopCard extends LitElement {
           <span class="stat-top"
             ><ha-icon icon="mdi:devices"></ha-icon>${this._t("clients")}</span
           >
-          <strong>${model.connectedClients} ${this._t("connected")}</strong>
+          <strong>${model.connectedClients}</strong>
         </div>
         <button
           class="stat"
@@ -216,8 +216,11 @@ export class FreeboxPopCard extends LitElement {
   }
 
   _renderHero(model) {
-    const uptime = formatUptime(model.connection.uptime, (key) => this._t(key));
-    const subtitle = [model.connection.IPv4, uptime !== "—" ? uptime : ""]
+    const uptime = formatUptime(model.systemUptime, (key) => this._t(key));
+    const subtitle = [
+      model.connection.IPv4,
+      uptime !== "—" ? `${this._t("system_uptime")} ${uptime}` : "",
+    ]
       .filter(Boolean)
       .join(" · ");
     return html`
@@ -272,8 +275,10 @@ export class FreeboxPopCard extends LitElement {
           ${this._renderKeyValue(this._t("ipv4"), model.connection.IPv4)}
           ${this._renderKeyValue(this._t("ipv6"), model.connection.IPv6)}
           ${this._renderKeyValue(
-            this._t("uptime"),
-            formatUptime(model.connection.uptime, (key) => this._t(key)),
+            this._t("connection_uptime"),
+            model.connectionUptime === undefined
+              ? this._t("not_exposed")
+              : formatUptime(model.connectionUptime, (key) => this._t(key)),
           )}
           ${
             this._config.view === "detailed"
@@ -306,12 +311,29 @@ export class FreeboxPopCard extends LitElement {
   }
 
   _renderSystem(model) {
-    if (!model.temperatures.length && !model.fans.length && !model.missedCalls) {
+    if (
+      !model.systemUptime &&
+      !model.temperatures.length &&
+      !model.fans.length &&
+      !model.missedCalls
+    ) {
       return nothing;
     }
     return html`
       <section class="panel">
         ${this._renderPanelHeader(this._t("system"), "mdi:chip")}
+        ${
+          model.systemUptime
+            ? html`
+                <div class="key-values system-uptime">
+                  ${this._renderKeyValue(
+                    this._t("system_uptime"),
+                    formatUptime(model.systemUptime, (key) => this._t(key)),
+                  )}
+                </div>
+              `
+            : nothing
+        }
         ${
           model.temperatures.length
             ? html`

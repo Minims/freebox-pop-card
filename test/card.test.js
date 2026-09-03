@@ -40,9 +40,10 @@ function createCard(view = "overview") {
       device_id: "router",
       config_entry_id: "entry",
     },
-    "button.reboot": {
-      entity_id: "button.reboot",
-      unique_id: "AA reboot",
+    "button.freebox_restart": {
+      entity_id: "button.freebox_restart",
+      unique_id: "AA",
+      device_class: "restart",
       platform: "freebox",
       device_id: "router",
       config_entry_id: "entry",
@@ -65,13 +66,17 @@ function createCard(view = "overview") {
       attributes: { friendly_name: "Upload", unit_of_measurement: "MB/s" },
     },
     "switch.wifi": { state: "on", attributes: { friendly_name: "Wi-Fi" } },
-    "button.reboot": { state: "unknown", attributes: {} },
+    "button.freebox_restart": {
+      state: "unknown",
+      attributes: { device_class: "restart" },
+    },
     "device_tracker.router": {
       state: "home",
       attributes: {
         friendly_name: "Freebox Pop",
         connection_type: "FTTH",
         IPv4: "192.0.2.10",
+        uptime: "2026-09-03T08:00:00Z",
       },
     },
   };
@@ -104,6 +109,9 @@ describe("Freebox Pop card", () => {
     expect(text).toContain("12.5 MB/s");
     expect(text).toContain("FTTH");
     expect(text).toContain("192.0.2.10");
+    expect(text).toContain("Uptime système");
+    expect(text).toContain("Uptime connexion");
+    expect(text).toContain("Non exposé");
   });
 
   it("confirms Wi-Fi shutdown and Server reboot", async () => {
@@ -120,7 +128,7 @@ describe("Freebox Pop card", () => {
       entity_id: "switch.wifi",
     });
     expect(callService).toHaveBeenNthCalledWith(2, "button", "press", {
-      entity_id: "button.reboot",
+      entity_id: "button.freebox_restart",
     });
   });
 
