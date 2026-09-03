@@ -13,6 +13,12 @@ and does not connect to the router directly from the browser.
 [![License](https://img.shields.io/github/license/Minims/freebox-pop-card)](LICENSE)
 [![Buy me a coffee](https://img.shields.io/badge/Buy_me_a_coffee-minims-FFDD00?logo=buymeacoffee&logoColor=000)](https://www.buymeacoffee.com/minims)
 
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Minims&repository=freebox-pop-card&category=plugin">
+    <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open the Freebox Pop Card repository in HACS">
+  </a>
+</p>
+
 ## Features
 
 - Automatic Freebox Server and entity discovery by Home Assistant `device_id`; renamed entity IDs work.
@@ -42,7 +48,8 @@ supported by the official integration.
 
 ### HACS
 
-1. Add `https://github.com/Minims/freebox-pop-card` as a custom **Dashboard** repository in HACS.
+1. Select the **Open in HACS** badge above, or add `https://github.com/Minims/freebox-pop-card` as a
+   custom **Dashboard** repository in HACS.
 2. Install **Freebox Pop Card**.
 3. Reload the browser when HACS requests it, then add the card from the dashboard editor.
 
