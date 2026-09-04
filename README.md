@@ -22,7 +22,7 @@ and does not connect to the router directly from the browser.
 ## Preview
 
 <p align="center">
-  <img src="docs/images/freebox-pop-card-preview.svg" alt="Preview of the Freebox Pop Card" width="600">
+  <img src="docs/images/freebox-pop-card-preview.png" alt="Preview of the Freebox Pop Card" width="600">
 </p>
 
 ## Features
@@ -33,8 +33,8 @@ and does not connect to the router directly from the browser.
 - Separate system uptime display, without confusing it with the Internet connection uptime.
 - Temperatures, fan speeds, attached storage, RAID health, missed calls, and an expandable
   connected-client list.
-- Player, Wi-Fi repeater, and DECT-phone online state when detected through Freebox device trackers.
-- Wi-Fi control, Freebox OS shortcut, mark-calls-read action, protected Server reboot, and optional
+- Player and Wi-Fi repeater online state when detected through Freebox device trackers.
+- Wi-Fi control, Freebox OS shortcut, mark-calls-read action, protected soft reboot, and optional
   hardware power cycle through a Zigbee plug.
 - Compact, overview, and detailed layouts for Sections dashboards and mobile screens.
 - English and French interface, Home Assistant theme support, and a visual card editor.
@@ -103,7 +103,7 @@ hard_reboot_delay: 15 # seconds, from 5 to 300
 | `show_system`        | `true`      | Shows temperatures, fans, and missed calls.                     |
 | `show_storage`       | `true`      | Shows attached partitions and RAID health.                      |
 | `show_clients`       | `true`      | Shows devices currently connected to this Freebox.              |
-| `show_equipment`     | `true`      | Shows detected Player, Wi-Fi repeater, and DECT-phone state.    |
+| `show_equipment`     | `true`      | Shows detected Player and Wi-Fi repeater state.                 |
 | `show_controls`      | `true`      | Shows Wi-Fi, Freebox OS, call, and reboot actions.              |
 | `confirm_actions`    | `true`      | Confirms Wi-Fi shutdown and Server reboot.                      |
 | `max_clients`        | `6`         | Number of connected clients displayed, from 0 to 20.            |
@@ -122,8 +122,9 @@ uptime**. A separate **Connection uptime** row is kept distinct and reports that
 Home Assistant provides that value.
 
 Connected-client detection depends on the `device_tracker` entities created by the official Freebox
-integration. Disabled entities are not displayed. The Player, repeater, and phone panel is populated
-only when those trackers are identifiable from their Freebox metadata, icon, or label.
+integration. Disabled entities are not displayed. The Player and repeater panel is populated only when
+those trackers are identifiable from their Freebox metadata, icon, or label. DECT status is not inferred
+from a device tracker because the official integration does not expose the Freebox telephony API state.
 
 ## Optional hard reboot
 

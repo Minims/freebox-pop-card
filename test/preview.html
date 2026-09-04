@@ -6,15 +6,15 @@
     <title>Freebox Pop Card preview</title>
     <style>
       :root {
-        color-scheme: light dark;
-        --primary-text-color: #202124;
-        --secondary-text-color: #6a6d72;
-        --disabled-text-color: #a1a4a9;
-        --primary-color: #e10600;
-        --error-color: #d93025;
-        --divider-color: #dcdde1;
-        --card-background-color: #fff;
-        --ha-card-background: #fff;
+        color-scheme: dark;
+        --primary-text-color: #e5e5e5;
+        --secondary-text-color: #a6a6a6;
+        --disabled-text-color: #777;
+        --primary-color: #00b8e6;
+        --error-color: #ff6b64;
+        --divider-color: #454545;
+        --card-background-color: #1c1c1c;
+        --ha-card-background: #1c1c1c;
       }
 
       body {
@@ -22,31 +22,61 @@
         min-height: 100vh;
         place-items: start center;
         margin: 0;
-        background: #eef0f3;
+        background: #101010;
         font-family: Arial, sans-serif;
       }
 
       freebox-pop-card {
-        width: min(720px, calc(100vw - 32px));
-        margin: 32px 0;
+        width: min(500px, calc(100vw - 24px));
+        margin: 12px 0;
       }
 
       ha-card {
         display: block;
-        border-radius: 20px;
+        border: 1px solid #414141;
+        border-radius: 16px;
         background: var(--card-background-color);
-        box-shadow: 0 8px 28px rgb(0 0 0 / 15%);
-      }
-
-      ha-icon {
-        display: inline-grid;
-        place-items: center;
-      }
-
-      ha-icon::after {
-        content: "•";
+        box-shadow: 0 8px 28px rgb(0 0 0 / 35%);
       }
     </style>
+    <script>
+      customElements.define(
+        "ha-icon",
+        class extends HTMLElement {
+          connectedCallback() {
+            const symbols = {
+              "mdi:access-point-network": "⌁",
+              "mdi:alert-circle": "!",
+              "mdi:check-circle": "●",
+              "mdi:chevron-down": "⌄",
+              "mdi:chevron-up": "⌃",
+              "mdi:chip": "▦",
+              "mdi:devices": "▣",
+              "mdi:download-network-outline": "⇣",
+              "mdi:harddisk": "▤",
+              "mdi:help-circle": "?",
+              "mdi:phone-check": "✓",
+              "mdi:power-cycle": "⏻",
+              "mdi:restart": "↻",
+              "mdi:router-network": "◇",
+              "mdi:router-network-off": "◇",
+              "mdi:television-play": "▻",
+              "mdi:tune-variant": "≡",
+              "mdi:upload-network-outline": "⇡",
+              "mdi:wan": "⊙",
+              "mdi:web": "◎",
+              "mdi:wifi": "≋",
+            };
+            this.textContent = symbols[this.getAttribute("icon")] ?? "◆";
+            this.style.display = "inline-grid";
+            this.style.placeItems = "center";
+            this.style.fontFamily = "Arial, sans-serif";
+            this.style.fontWeight = "700";
+            this.style.lineHeight = "1";
+          }
+        },
+      );
+    </script>
   </head>
   <body>
     <freebox-pop-card></freebox-pop-card>
@@ -82,6 +112,34 @@
           device_id: "router",
           config_entry_id: "entry",
         },
+        "sensor.freebox_temperature_2": {
+          entity_id: "sensor.freebox_temperature_2",
+          unique_id: "AA temp_switch",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "sensor.freebox_missed": {
+          entity_id: "sensor.freebox_missed",
+          unique_id: "AA missed",
+          platform: "freebox",
+          device_id: "router",
+          config_entry_id: "entry",
+        },
+        "sensor.freebox_partition_media": {
+          entity_id: "sensor.freebox_partition_media",
+          unique_id: "AA partition_free_space 0 1",
+          platform: "freebox",
+          device_id: "disk",
+          config_entry_id: "entry",
+        },
+        "sensor.freebox_partition_backup": {
+          entity_id: "sensor.freebox_partition_backup",
+          unique_id: "AA partition_free_space 0 2",
+          platform: "freebox",
+          device_id: "disk",
+          config_entry_id: "entry",
+        },
         "switch.freebox_wifi": {
           entity_id: "switch.freebox_wifi",
           unique_id: "AA wifi",
@@ -110,13 +168,6 @@
           device_id: "router",
           config_entry_id: "entry",
         },
-        "device_tracker.phone": {
-          entity_id: "device_tracker.phone",
-          unique_id: "BB",
-          platform: "freebox",
-          device_id: "phone",
-          config_entry_id: "entry",
-        },
         "device_tracker.player": {
           entity_id: "device_tracker.player",
           unique_id: "CC",
@@ -126,6 +177,30 @@
         "device_tracker.repeater": {
           entity_id: "device_tracker.repeater",
           unique_id: "DD",
+          platform: "freebox",
+          config_entry_id: "entry",
+        },
+        "device_tracker.laptop": {
+          entity_id: "device_tracker.laptop",
+          unique_id: "EE",
+          platform: "freebox",
+          config_entry_id: "entry",
+        },
+        "device_tracker.television": {
+          entity_id: "device_tracker.television",
+          unique_id: "FF",
+          platform: "freebox",
+          config_entry_id: "entry",
+        },
+        "device_tracker.home_assistant": {
+          entity_id: "device_tracker.home_assistant",
+          unique_id: "GG",
+          platform: "freebox",
+          config_entry_id: "entry",
+        },
+        "device_tracker.printer": {
+          entity_id: "device_tracker.printer",
+          unique_id: "HH",
           platform: "freebox",
           config_entry_id: "entry",
         },
@@ -154,6 +229,32 @@
           state: "1420",
           attributes: { friendly_name: "Ventilateur", unit_of_measurement: "rpm" },
         },
+        "sensor.freebox_temperature_2": {
+          state: "54.0",
+          attributes: {
+            friendly_name: "Freebox Pop Température switch",
+            device_class: "temperature",
+            unit_of_measurement: "°C",
+          },
+        },
+        "sensor.freebox_missed": {
+          state: "0",
+          attributes: { friendly_name: "Appels manqués", unit_of_measurement: "calls" },
+        },
+        "sensor.freebox_partition_media": {
+          state: "31.4",
+          attributes: {
+            friendly_name: "Disk 0 Espace libre Média",
+            unit_of_measurement: "%",
+          },
+        },
+        "sensor.freebox_partition_backup": {
+          state: "68.2",
+          attributes: {
+            friendly_name: "Disk 0 Espace libre Sauvegarde",
+            unit_of_measurement: "%",
+          },
+        },
         "switch.freebox_wifi": { state: "on", attributes: {} },
         "button.freebox_reboot": {
           state: "unknown",
@@ -169,13 +270,6 @@
             uptime: new Date(Date.now() - 246600000).toISOString(),
           },
         },
-        "device_tracker.phone": {
-          state: "home",
-          attributes: {
-            friendly_name: "11:22:33:44:55:66 Téléphone DECT",
-            icon: "mdi:phone-voip",
-          },
-        },
         "device_tracker.player": {
           state: "home",
           attributes: {
@@ -185,11 +279,36 @@
         },
         "device_tracker.repeater": {
           state: "not_home",
-          attributes: { friendly_name: "Répéteur Wi-Fi" },
+          attributes: { friendly_name: "Repeteur Wifi Freebox" },
+        },
+        "device_tracker.laptop": {
+          state: "home",
+          attributes: { friendly_name: "Ordinateur portable" },
+        },
+        "device_tracker.television": {
+          state: "home",
+          attributes: { friendly_name: "Télévision salon" },
+        },
+        "device_tracker.home_assistant": {
+          state: "home",
+          attributes: { friendly_name: "Home Assistant" },
+        },
+        "device_tracker.printer": {
+          state: "home",
+          attributes: { friendly_name: "Imprimante bureau" },
+        },
+        "switch.freebox_power": {
+          state: "on",
+          attributes: { friendly_name: "Prise Freebox" },
         },
       };
       const card = document.querySelector("freebox-pop-card");
-      card.setConfig({ type: "custom:freebox-pop-card", max_clients: 1 });
+      card.setConfig({
+        type: "custom:freebox-pop-card",
+        max_clients: 4,
+        hard_reboot_entity: "switch.freebox_power",
+        hard_reboot_delay: 15,
+      });
       card.hass = {
         language: "fr",
         entities,
@@ -202,9 +321,16 @@
             sw_version: "4.9.8",
             configuration_url: "https://mafreebox.freebox.fr/",
           },
-          phone: { id: "phone", name: "Téléphone" },
+          disk: {
+            id: "disk",
+            name: "Disk 0",
+            model: "USB SSD",
+            via_device_id: "router",
+          },
         },
         callService: (...args) => console.info("service", ...args),
+        callWS: (...args) => console.info("websocket", ...args),
+        user: { is_admin: true },
       };
     </script>
   </body>

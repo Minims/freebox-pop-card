@@ -487,7 +487,6 @@ export class FreeboxPopCard extends LitElement {
     const icons = {
       player: "mdi:television-play",
       repeater: "mdi:access-point-network",
-      phone: "mdi:phone",
     };
 
     return html`

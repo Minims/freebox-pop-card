@@ -190,12 +190,8 @@ export function inferEquipmentKind(entry, state, hass) {
   if (icon === "mdi:television-guide" || /\bplayer\b/.test(source)) {
     return "player";
   }
-  if (/\b(repeteur|repeater)\b/.test(source)) return "repeater";
-  if (
-    icon === "mdi:phone-voip" ||
-    /\b(telephone|fixed phone|landline|phone fixe)\b/.test(source)
-  ) {
-    return "phone";
+  if (source.includes("repeteur") || source.includes("repeater")) {
+    return "repeater";
   }
   return undefined;
 }
@@ -317,8 +313,8 @@ export function buildModel(hass, rawConfig = {}) {
     .filter((item) => item.kind)
     .sort(
       (left, right) =>
-        ["player", "repeater", "phone"].indexOf(left.kind) -
-          ["player", "repeater", "phone"].indexOf(right.kind) ||
+        ["player", "repeater"].indexOf(left.kind) -
+          ["player", "repeater"].indexOf(right.kind) ||
         left.label.localeCompare(right.label),
     );
 

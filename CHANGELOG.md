@@ -2,13 +2,22 @@
 
 All notable changes to this project are documented here.
 
+## 2026.9.3
+
+- Label the official Freebox action as **Soft reboot**, distinct from the optional Zigbee-plug
+  **Hard reboot**.
+- Detect repeaters from the word `Repeteur` or `Répéteur` anywhere in their friendly name.
+- Stop inferring DECT status from network device trackers; omit it until the official integration
+  exposes the telephony API state.
+- Replace the illustrative README mockup with a preview rendered from the actual card component.
+
 ## 2026.9.2
 
 - Keep **Mark calls as read** available whenever the official Freebox action is exposed.
 - Let the supplemental-client link expand and collapse the complete connected-client list.
 - Align icons and labels consistently across metrics, panels, controls, and actions.
-- Add a Freebox equipment panel that reports Player, Wi-Fi repeater, and DECT phone activity from
-  official `device_tracker` entities.
+- Add a Freebox equipment panel that reports Player and Wi-Fi repeater activity from official
+  `device_tracker` entities.
 - Add an optional, confirmed hard-reboot action for a configured Freebox power plug. The off → delay →
   on sequence runs in Home Assistant, not in the browser.
 

@@ -112,8 +112,7 @@ function createCard({
   if (equipment) {
     const items = [
       ["player", "Freebox Player POP", "home", "mdi:television-guide"],
-      ["repeater", "Répéteur Wi-Fi", "not_home", "mdi:network"],
-      ["phone", "Téléphone DECT", "home", "mdi:phone-voip"],
+      ["repeater", "Repeteur Wifi Freebox", "not_home", "mdi:network"],
     ];
     for (const [id, name, state, icon] of items) {
       const entityId = `device_tracker.${id}`;
@@ -242,11 +241,10 @@ describe("Freebox Pop card", () => {
       expect.stringContaining("Freebox Player POP Actif"),
     );
     expect(equipmentItems).toContainEqual(
-      expect.stringContaining("Répéteur Wi-Fi Inactif"),
+      expect.stringContaining("Repeteur Wifi Freebox Inactif"),
     );
-    expect(equipmentItems).toContainEqual(
-      expect.stringContaining("Téléphone DECT Actif"),
-    );
+    expect(text).toContain("Soft reboot");
+    expect(text).toContain("Hard reboot");
 
     card.shadowRoot.querySelector(".hard-reboot-button").click();
     await Promise.resolve();

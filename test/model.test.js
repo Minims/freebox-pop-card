@@ -264,7 +264,17 @@ describe("Freebox entity discovery", () => {
         { ...tracker, entity_id: "device_tracker.repeater" },
         {
           state: "not_home",
-          attributes: { friendly_name: "Répéteur Wi-Fi étage" },
+          attributes: { friendly_name: "Repeteur Wifi Freebox" },
+        },
+        hass,
+      ),
+    ).toBe("repeater");
+    expect(
+      inferEquipmentKind(
+        { ...tracker, entity_id: "device_tracker.upstairs_repeater" },
+        {
+          state: "home",
+          attributes: { friendly_name: "Mon Repeteur" },
         },
         hass,
       ),
@@ -274,11 +284,14 @@ describe("Freebox entity discovery", () => {
         { ...tracker, entity_id: "device_tracker.phone" },
         {
           state: "home",
-          attributes: { friendly_name: "Téléphone DECT" },
+          attributes: {
+            friendly_name: "Téléphone DECT",
+            icon: "mdi:phone-voip",
+          },
         },
         hass,
       ),
-    ).toBe("phone");
+    ).toBeUndefined();
   });
 });
 
@@ -326,8 +339,7 @@ describe("Freebox model", () => {
     const hass = createHass();
     const equipment = [
       ["player", "Freebox Player POP", "home", "mdi:television-guide"],
-      ["repeater", "Répéteur Wi-Fi", "not_home", "mdi:network"],
-      ["phone", "Téléphone DECT", "home", "mdi:phone-voip"],
+      ["repeater", "Repeteur Wifi Freebox", "not_home", "mdi:network"],
     ];
     for (const [id, name, state, icon] of equipment) {
       const entityId = `device_tracker.${id}`;
@@ -351,7 +363,6 @@ describe("Freebox model", () => {
     ).toEqual([
       { kind: "player", connected: true },
       { kind: "repeater", connected: false },
-      { kind: "phone", connected: true },
     ]);
   });
 });
